@@ -1,53 +1,65 @@
-# A goody-bag of nifty plugins for [Py.Test](https://pytest.org)
-
-[![Circle CI](https://circleci.com/gh/manahl/pytest-plugins.svg?style=shield)](https://circleci.com/gh/manahl/pytest-plugins)
-
-[![Coverage Status](https://coveralls.io/repos/github/manahl/pytest-plugins/badge.svg?branch=master)](https://coveralls.io/github/manahl/pytest-plugins?branch=master)
-
-Plugin | Description |
------- | ----------- |
-| [pytest-server-fixtures](pytest-server-fixtures) |  Extensible server-running framework with a suite of well-known databases and webservices included | 
-| [pytest-shutil](pytest-shutil) | Unix shell and environment management tools |
-| [pytest-profiling](pytest-profiling) | Profiling plugin with tabular heat graph output and gprof support for C-Extensions | 
-| [pytest-devpi-server](pytest-devpi-server) | DevPI server fixture | 
-| [pytest-pyramid-server](pytest-pyramid-server) | Pyramid server fixture | 
-| [pytest-webdriver](pytest-webdriver) | Selenium webdriver fixture | 
-| [pytest-virtualenv](pytest-virtualenv) | Virtualenv fixture | 
-| [pytest-qt-app](pytest-qt-app) | PyQT application fixture | 
-| [pytest-listener](pytest-listener)  | TCP Listener/Reciever for testing remote systems | 
-| [pytest-git](pytest-git) | Git repository fixture | 
-| [pytest-svn](pytest-svn) | SVN repository fixture | 
-| [pytest-fixture-config](pytest-fixture-config) | Configuration tools for Py.test fixtures |
-| [pytest-verbose-parametrize](pytest-verbose-parametrize) | Makes py.test's parametrize output a little more verbose |
+# pytest-shutil
 
 
-## Developing these plugins
-
-All of these plugins share setup code and configuration so there is a top-level Makefile to
-automate process of setting them up for test and development.
-
-### Pre-requisites
-
-You have `python` installed on your path as well as `virtualenv`
-
-### Makefile targets
-
-To create a local virtualenv called `venv`, install all extra dependencies and set up all
-of the packages for development simply run:
+This library is a goodie-bag of Unix shell and environment management tools for automated tests.
+A summary of the available functions is below, look at the source for the full listing.
+               
+## Installation
+                  
+Install using your favourite package manager::
 
 ```bash
-    make develop
+    pip install pytest-shutil
+    #  or..
+    easy_install pytest-shutil
+```               
+
+## Workspace Fixture
+
+The workspace fixture is simply a temporary directory at function-scope with a few bells and whistles::
+
+```python
+    # Enable the fixture explicitly in your tests or conftest.py (not required when using setuptools entry points)
+    pytest_plugins = ['pytest_shutil']
+    
+    def test_something(workspace):
+        # Workspaces contain a handle to the path.py path object (see https://pythonhosted.org/path.py)
+        path = workspace.workspace         
+        script = path / 'hello.sh'
+        script.write_text('#!/bin/sh\n echo hello world!')
+        
+        # There is a 'run' method to execute things relative to the workspace root
+        workspace.run('hello.sh')
 ```
 
-To do this for a subset of packages run:
+## ``pytest_shutil.env``: Shell helpers
 
-```bash
-    make develop PACKAGES="pytest-profiling pytest-devpi"
-```
+| function  | description
+| --------- | -----------
+| set_env   | contextmanager to set env vars 
+| unset_env | contextmanager to unset env vars 
+| no_env    | contextmanager to unset a single env var 
+| no_cov    | contextmanager to disable coverage in subprocesses 
 
-If you already have a virtualenv and would rather just use that, you can run this to 
-copy all the required files in place and setup up all the packages using that:
+## ``pytest_shutil.cmdline``: Command-line helpers
 
-```bash
-    make local_develop
-```
+| function  | description
+| --------- | -----------
+| umask                      | contextmanager to set the umask
+| chdir                      | contextmanager to change to a directory
+| TempDir                    | contextmanager for a temporary directory
+| PrettyFormatter            | simple text formatter for drawing title, paragrahs, hrs. 
+| copy_files                 | copy all files from one directory to another
+| getch                      | cross-platform read of a single character from the screen
+| which                      | analoge of unix ``which``
+| get_real_python_executable | find our system Python, useful when running under virtualenv
+
+## ``pytest_shutil.run``: Running things in subprocesses
+
+| function  | description
+| --------- | -----------
+| run                | run a command, with options for capturing output, checking return codes.
+| run_as_main        | run a function as if it was the system entry point
+| run_module_as_main | run a module as if it was the system entry point
+| run_in_subprocess  | run a function in a subprocess
+| run_with_coverage  | run a command with coverage enabled
